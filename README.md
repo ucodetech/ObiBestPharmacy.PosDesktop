@@ -1,0 +1,1 @@
+# ObiBestPharmacy.PosDesktop
