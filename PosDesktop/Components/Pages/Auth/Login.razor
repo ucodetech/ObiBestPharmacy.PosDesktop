@@ -1,0 +1,169 @@
+@page "/auth/login"
+@using PosDesktop.Services.Interfaces
+@layout GuestLayout
+@inject IAuthService _authService
+@inject NavigationManager Navigation
+@inject IJSRuntime _jsRuntime
+@inject IToastService ToastService
+<section class="body1">
+    <div class="login-container row">
+
+        <div class="col-md-6 col-sm-12">
+            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                <DataAnnotationsValidator />
+                <div class="login-box">
+                    <h2 class="text-center">LOGIN</h2>
+                    <div class="form-group">
+                        <input type="email" placeholder="Email" @bind-value="loginModel.Email">
+                        <span class="text-danger">@GetErrorMessage(nameof(loginModel.Email))</span>
+                    </div>
+                    <div class="form-group">
+                        <input type="password" placeholder="Password" @bind-value="loginModel.Password">
+                        <span class="text-danger">@GetErrorMessage(nameof(loginModel.Password))</span>
+                    </div>
+
+                </div>
+                <div class="d-flex justify-content-between align-content-center mt-2 mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe"  @bind-value="loginModel.RememberMe">
+                        <label class="form-check-label" for="rememberMe">Remember Me</label>
+                    </div>
+                    <div class="">
+                        <div class="d-flex justify-content-between">
+                            <a href="/auth/forgot-password">Forgot Password?</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group col-md-12">
+                    <button class="btn btn-block btn-outline-info btn-md">Login</button>
+                </div>
+            </EditForm>
+        </div>
+
+        <div class="col-md-6 col-sm-12">
+            <div class="fingerprint-box mb-1">
+                <h4>With Unique Code</h4>
+            </div>
+            <div class="right-section">
+                <div class="pinpad-container">
+                    <div class="row">
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('1')">1</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('2')">2</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('3')">3</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('4')">4</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('5')">5</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('6')">6</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('7')">7</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('8')">8</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('9')">9</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button" @onclick="() => AddNumberToCode('0')">0</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button enter" style="font-weight:bolder;background:red;border-radius:10px;" @onclick="ClearCode">C</button></div>
+                        <div class="col-4"><button type="button" class="pinpad-button enter" style="font-weight:bolder;border-radius:10px;background:green;" @onclick="LoginWithCode">E</button></div>
+                    </div>
+                </div>
+
+                <div class="fingerprint-box">
+                    <input type="password" class="code" placeholder="Code" @bind-value="code" style="font-size:24px; padding-top:3px; padding-bottom:3px;" maxlength="8">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+@code {
+
+    private LoginModel loginModel = new();
+    private Dictionary<string, List<string>> errorMessages = new();
+    private bool IsLoading { get; set; } = false;
+    private string code = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        IsLoading = true;
+        errorMessages.Clear();
+        var response = await _authService.Login(new LoginUserRequest
+            {
+                Email = loginModel.Email,
+                Password = loginModel.Password,
+                RememberMe = loginModel.RememberMe
+            });
+
+        if (response.Status)
+        {
+            IsLoading = false;
+            Navigation.NavigateTo("/dashboard");
+        }
+        else
+        {
+            if (response.Errors?.Count > 0)
+            {
+                IsLoading = false;
+                errorMessages = response.Errors.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToList()
+                );
+            }
+            else if (!string.IsNullOrEmpty(response.Message))
+            {
+                IsLoading = false;
+                ToastService.ShowError(response.Message);
+            }
+        }
+    }
+
+    private string? GetErrorMessage(string fieldName)
+    {
+        return errorMessages.ContainsKey(fieldName)
+            ? errorMessages[fieldName].FirstOrDefault()
+            : null;
+    }
+
+    private void AddNumberToCode(char number)
+    {
+        code += number;
+        NotMoreThanEight(code);
+
+    }
+    private void ClearCode()
+    {
+        code = string.Empty;
+    }
+
+    private async Task LoginWithCode()
+    {
+        IsLoading = true;
+        errorMessages.Clear();
+        var response = await _authService.LoginWithCode(int.Parse(code));
+
+        if (response.Status)
+        {
+            IsLoading = false;
+            Navigation.NavigateTo("/dashboard");
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(response.Message))
+            {
+                IsLoading = false;
+                ToastService.ShowError(response.Message);
+                // await JSRuntime.InvokeVoidAsync("playBeep");
+
+            }
+        }
+    }
+
+    private void NotMoreThanEight(string code)
+    {
+        if(code.Length > 8){
+            ClearCode();
+            ToastService.ShowWarning("Code length can not be more than 8");
+        }
+    }
+
+    private class LoginModel
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+        public bool RememberMe { get; set; }
+    }
+}

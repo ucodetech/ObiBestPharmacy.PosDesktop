@@ -1,0 +1,26 @@
+﻿@using PosDesktop.Services.Interfaces
+@inject IUserStateService _userStateService
+@inject IToastService _toastService
+
+    @code {
+       [Parameter] public EventCallback<StaffResponse?> OnUserLoaded { get; set; }
+        public StaffResponse? _currentUser { get; private set; }
+
+        protected override async Task OnInitializedAsync()
+        {
+            var user = await _userStateService.CurrentUser();
+            if (user.Data is not null)
+            {
+                await OnUserLoaded.InvokeAsync(user.Data);
+                // _currentUser = user.Data;
+            }
+            else
+            {
+                _toastService.ShowError(user.Message);
+            }
+            StateHasChanged();
+        }
+
+    }
+
+

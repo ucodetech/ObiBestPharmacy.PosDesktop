@@ -1,0 +1,28 @@
+﻿@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using PosDesktop.Services.Interfaces
+@attribute [Authorize]
+
+@inject IToastService _toastService
+
+<CurrentUser OnUserLoaded="HandleUserLoaded" />
+<PageTitle>Home</PageTitle>
+
+
+
+
+<h1>Hello, world! -- @_currentUser?.FirstName</h1>
+
+Welcome to your new app.
+
+
+@code {
+    private StaffResponse? _currentUser;
+
+
+    private void HandleUserLoaded(StaffResponse? user)
+    {
+        _currentUser = user;
+        StateHasChanged(); // Ensure UI updates
+    }
+}

@@ -1,0 +1,53 @@
+﻿@using Blazored.Toast.Configuration
+@* @using PosDesktop.Services.Interfaces *@
+@inherits LayoutComponentBase
+@* @inject IUserStateService _userStateService; *@
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<BlazoredToasts Position="ToastPosition.TopRight"
+Timeout="10"
+ShowProgressBar="true">
+    <CloseButtonContent>
+        <div>
+            <span>&times;</span>
+        </div>
+    </CloseButtonContent>
+</BlazoredToasts>
+
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <button type="button" @onclick="HandleLogout"  class="btn btn-sm btn-danger">Logout</button>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+<script src="@Assets["lib/staff.js"]"></script>
+
+
+@code{
+
+    private void HandleLogout()
+    {
+        Navigation.NavigateTo("/auth/logout");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Dynamically load the script from wwwroot/lib/staff.js
+        await JSRuntime.InvokeVoidAsync("eval", @"
+            var script = document.createElement('script');
+            script.src = 'lib/staff.js';  
+            document.head.appendChild(script);
+        ");
+
+    }
+}

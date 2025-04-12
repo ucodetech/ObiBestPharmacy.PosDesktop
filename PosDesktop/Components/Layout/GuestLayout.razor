@@ -1,0 +1,74 @@
+@using Blazored.Toast.Configuration
+@using PosDesktop.Services.Interfaces 
+@inherits LayoutComponentBase
+@inject IUserStateService _userService
+<BlazoredToasts Position="ToastPosition.TopRight"
+Timeout="10"
+ShowProgressBar="true">
+    <CloseButtonContent>
+        <div>
+            <span>&times;</span>
+        </div>
+    </CloseButtonContent>
+</BlazoredToasts>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Guest Layout</title>
+
+
+    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.css"]"/>
+    <link rel="stylesheet" href="@Assets["lib/pos.css"]"/>
+
+    <!-- Custom Styles -->
+</head>
+<body>
+    <header class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">ObiBest POS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    @if (IsAuth)
+                    {
+                        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Logout">Logout</a></li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+
+                    }
+
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <main class="container text-light">
+        @Body
+    </main>
+
+    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/js/bootstrap.js"]" />
+    <link rel="stylesheet" href="@Assets["lib/pos.js"]" />
+</body>
+</html>
+
+@code{
+    private bool IsAuth { get; set; } = false;
+    protected override async Task OnInitializedAsync()
+    {
+        bool loggedIn = await _userService.IsLoggedIn();
+        if (loggedIn)
+        {
+            IsAuth = true;
+        }
+    }
+ }

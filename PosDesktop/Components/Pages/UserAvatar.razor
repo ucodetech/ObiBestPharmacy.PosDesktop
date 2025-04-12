@@ -1,0 +1,9 @@
+﻿<div class="d-flex align-items-center">
+    <img src="@ImageUrl" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" alt="User" />
+    <span class="fw-semibold">@UserName</span>
+</div>
+
+@code {
+    [Parameter] public string UserName { get; set; }
+    [Parameter] public string ImageUrl { get; set; } = "https://via.placeholder.com/40";
+}

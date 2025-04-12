@@ -1,0 +1,24 @@
+﻿@if (Items?.Any() == true)
+{
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-transparent p-0 m-0">
+            @foreach (var item in Items.Take(Items.Count - 1))
+            {
+                <li class="breadcrumb-item">
+                    <a href="@item.Url">@item.Text</a>
+                </li>
+            }
+            <li class="breadcrumb-item active" aria-current="page">@Items.Last().Text</li>
+        </ol>
+    </nav>
+}
+
+@code {
+    [Parameter] public List<BreadItem> Items { get; set; }
+
+    public class BreadItem
+    {
+        public string Text { get; set; }
+        public string Url { get; set; }
+    }
+}

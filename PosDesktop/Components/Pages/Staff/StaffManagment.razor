@@ -1,0 +1,153 @@
+﻿@page "/staff/staff-dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using PosDesktop.Services.Interfaces
+@using static  PosDesktop.Components.Pages.Bread
+@inject IStaffManagementService _staff
+@inject IJSRuntime _js;
+@attribute [Authorize]
+
+
+<Bread Items="@pageData" />
+
+<div class="row">
+    <div class="col-md-4 col-sm-12">
+
+        <div class="card p-3 bg-pos">
+            <div class="card-header">
+                <div class="card-title">
+                    <h4>Add/Update Staff</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <UpsertStaff UserId="@selectedUserId" />
+
+            </div>
+        </div>
+
+    </div>
+    <div class="col-md-8 col-sm-12">
+        <div class="card p-3 bg-pos">
+            <div class="mb-3">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <button class="nav-link active">Staff Management</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link">Attendance</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button class="btn btn-info">Add Staff</button>
+
+            </div>
+            <div class="table-responsive">
+                <table class="table table-light table-striped table-bordered align-middle " id="staffTable">
+                <thead class="table-light">
+                    <tr class="table-light">
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Age</th>
+                        <th>Salary</th>
+                        <th>Timings</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (isLoading)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-white">
+                                <i class="fa fa-spinner fa-spin"></i> Loading staff...
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+@code {
+
+    private Guid? selectedUserId = null;
+
+    private void EditStaff(Guid id)
+    {
+        selectedUserId = id;
+    }
+
+    public List<BreadItem> pageData { get; set; } = new List<BreadItem>
+    {
+        new BreadItem
+        {
+            Text = "Staff",
+            Url = "/staff/staff-dashboard"
+        },
+
+    };
+
+    private List<StaffMember> staffList = new();
+    private bool isLoading = true;
+
+   
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (staffList.Any())
+            {
+                await _js.InvokeVoidAsync("initDataTable", staffList);
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _staff.GetAllStaff(1, 1000);
+        if (response?.Data != null)
+        {
+            var staff = response.Data.Select(s => new StaffMember
+                {
+                    Id = s.UserId,
+                    Name = $"{s.FirstName} {s.LastName}",
+                    Email = s.Email,
+                    Phone = s.PhoneNumber,
+                    Age = s.Age,
+                    Salary = s.Salary,
+                    Timings = s.Timings,
+                    ProfilePicture = s.ProfilePicture ?? "https://api.dicebear.com/7.x/personas/svg?seed=Random"
+                });
+            staffList = staff.ToList();
+        }
+        isLoading = false;
+        StateHasChanged();
+        await _js.InvokeVoidAsync("initDataTable", staffList);
+    }
+
+
+    public class StaffMember
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public int Age { get; set; }
+        public double? Salary { get; set; }
+        public string? Timings { get; set; }
+        public string? ProfilePicture { get; set; }
+    }
+
+}
+
+
+

@@ -1,0 +1,16 @@
+﻿@page "/auth/logout"
+@using PosDesktop.Services.Interfaces
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+@inject IToastService ToastService
+
+<h3>Logging out...</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.Logout();
+        ToastService.ShowSuccess("You have been logged out.");
+        Navigation.NavigateTo("/auth/login");
+    }
+}

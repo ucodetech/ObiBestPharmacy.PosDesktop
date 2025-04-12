@@ -1,0 +1,455 @@
+﻿ @using System.ComponentModel.DataAnnotations
+ @using PosDesktop.Services.Interfaces
+ @inject IJSRuntime JSRuntime
+ @inject IStaffManagementService _staff
+ @inject IToastService _toastService
+ @inject IAuthService _auth
+ @inject IFileService _fileService
+
+<div>
+    <EditForm Model="@profileUser" OnValidSubmit="@HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row mb-3">
+            <div class="form-group col-md-6 col-sm-12">
+                <label for="FirstName" class="form-label">First Name</label>
+                <InputText id="FirstName" class="form-control" @bind-Value="profileUser.FirstName" />
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.FirstName))</span>
+            </div>
+
+            <div class="col-md-6 col-sm-12">
+                <label for="LastName" class="form-label">Last Name</label>
+                <InputText id="LastName" class="form-control" @bind-Value="profileUser.LastName" />
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.LastName))</span>
+
+            </div>
+
+            <div class="col-md-6 col-sm-12">
+                <label for="OtherNames" class="form-label">Other Names (Optional)</label>
+                <InputText id="OtherNames" class="form-control" @bind-Value="profileUser.OtherNames" />
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.OtherNames))</span>
+
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <label for="Email" class="form-label">Email</label>
+                <InputText id="Email" class="form-control" @bind-Value="profileUser.Email" />
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.Email))</span>
+
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="PhoneNumber" class="form-label">Phone Number</label>
+            <div class="d-flex align-items-center">
+                <div class="me-2">
+                    <InputSelect id="CountryCode" class="form-select" @bind-Value="SelectedCountryCode">
+                        @foreach (var cod in CountryCodes)
+                        {
+                            <option value="@cod.Dial_Code" data-country-code="@cod.Dial_Code">@cod.Dial_Code (@cod.Code)</option>
+                        }
+                    </InputSelect>
+                </div>
+                <InputText id="PhoneNumber" class="form-control" @bind-Value="profileUser.PhoneNumber" />
+            </div>
+            <span class="text-danger">@GetErrorMessage(nameof(profileUser.PhoneNumber))</span>
+        </div>
+
+
+        <div class="row mb-3">
+            <div class="col-md-6 col-sm-12">
+                <label for="CountryId" class="form-label">Country</label>
+                <InputSelect id="CountryId" class="form-select" @bind-Value="selectedCountryId">
+                    <option value="">Select Country</option>
+                    @if (Countries != null)
+                    {
+                        @foreach (var country in Countries)
+                        {
+                            <option value="@country.CountryId">@country.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.CountryId))</span>
+
+            </div>
+
+            <div class="col-md-6 col-sm-12">
+                <label for="StateId" class="form-label">State</label>
+                <InputSelect id="StateId" class="form-select" @bind-Value="selectedStateId">
+                    <option value="">Select State</option>
+                    @if (States != null)
+                    {
+                        @foreach (var state in States)
+                        {
+                            <option value="@state.StateId">@state.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.StateId))</span>
+
+            </div>
+
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6 col-sm-12">
+                <label for="CityId" class="form-label">City</label>
+                <InputSelect id="CityId" class="form-select" @bind-Value="profileUser.CityId">
+                    <option value="">Select City</option>
+                    @if (Cities != null)
+                    {
+                        @foreach (var city in Cities)
+                        {
+                            <option value="@city.CityId">@city.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.CityId))</span>
+
+            </div>
+
+            <div class="col-md-6 col-sm-12">
+                <label for="RoleId" class="form-label">Role</label>
+                <InputSelect id="RoleId" class="form-select" @bind-Value="profileUser.RoleId">
+                    <option value="">Select Role</option>
+                    @if (Roles != null)
+                    {
+                        @foreach (var role in Roles)
+                        {
+                            <option value="@role.Id">@role.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.RoleId))</span>
+
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 col-sm-12">
+                <label for="Gender" class="form-label">Gender</label>
+                <InputSelect id="Gender" class="form-select" @bind-Value="profileUser.Gender">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.Gender))</span>
+
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <label for="DateOfBirth" class="form-label">Date of Birth</label>
+                <InputDate id="DateOfBirth" class="form-control" @bind-Value="profileUser.DateOfBirth" />
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.DateOfBirth))</span>
+
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="ImageFile" class="form-label">Select Image</label>
+                <InputFile id="ImageFile" class="form-control" OnChange="HandleFileSelected" />
+            </div>
+            <div class="col-md-6">
+                <label for="ProfilePicture" class="form-label">Profile Picture URL (Optional)</label>
+                <InputText id="ProfilePicture" class="form-control" @bind-Value="profileUser.ProfilePicture" disabled />
+
+                @if (!string.IsNullOrEmpty(profileUser.ProfilePicture) && IsEditing)
+                {
+                    <img src="@profileUser.ProfilePicture" alt="Profile Picture" class="rounded-circle mt-2" style="width: 80px; height: 80px; object-fit: cover;">
+                }
+                @if (!string.IsNullOrEmpty(previewUrl) && !IsEditing)
+                {
+                    <img src="@previewUrl" alt="Preview photo" class="rounded-circle mt-2" style="width: 80px; height: 80px; object-fit: cover;">
+                }
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 col-sm-12">
+                <label for="Timings" class="form-label">Timings</label>
+                <InputSelect id="Timings" class="form-select" @bind-Value="profileUser.Timings" disabled="@(TimingsList == null || !TimingsList.Any())">
+                    <option value="">Select Timing</option>
+
+                    @foreach (var time in TimingsList)
+                    {
+                        <option value="@time">@time</option>
+                    }
+
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.Timings))</span>
+
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <label for="Salary" class="form-label">Salary</label>
+                <InputNumber id="Salary" class="form-control" @bind-Value="profileUser.Salary" />
+                <span class="text-danger">@GetErrorMessage(nameof(profileUser.Salary))</span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="Address" class="form-label">Address</label>
+            <InputTextArea id="Address" class="form-control" @bind-Value="profileUser.Address" />
+            <span class="text-danger">@GetErrorMessage(nameof(profileUser.Address))</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary d-flex">
+            @if (IsLoading)
+            {
+                <span class="fas fa-spinner fa-spin"></span>
+            }
+            <span>Save Profile</span>
+        </button>
+    </EditForm>
+</div>
+
+
+@code {
+    private ProfileUserDTO? profileUser = new ProfileUserDTO();
+    private List<CountryResponse>? Countries { get; set; }
+    private List<StateResponse>? States { get; set; }
+    private List<CityResponse>? Cities { get; set; }
+    private List<RoleResponse>? Roles { get; set; }
+    private Dictionary<string, List<string>>? errorMessages = new();
+    private bool IsLoading { get; set; } = false;
+    private bool IsEditing { get; set; } = false;
+    private string? previewUrl { get; set; }
+    private string? SelectedCountryCode { get; set; }
+    private List<CountryCodeModel> CountryCodes = new List<CountryCodeModel>();
+    public class CountryCodeModel
+    {
+        public string Code { get; set; }
+        public string Name { get; set; }
+        public string Dial_Code { get; set; }
+    }
+
+    private List<string> TimingsList = new List<string>()
+        {
+            "8:00 am - 12:00 pm",
+            "12:00 pm - 6:00 pm",
+            "7:00 pm - 12:00 am"
+        };
+
+    [Parameter]
+    public Guid? UserId { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            var codes = await _staff.GetCountryCodesAsync();
+            if (codes is not null)
+            {
+                CountryCodes = codes.ToList();
+            }
+            
+
+            if (UserId is not null && UserId != Guid.Empty)
+            {
+                // profileUser = await _staff.GetStaff(UserId.Value);
+            }
+
+            Countries = await GetCountries();
+            Roles = await GetRoles();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading staff: {ex.Message}");
+        }
+    }
+
+    private Guid selectedCountryId
+    {
+        get => profileUser.CountryId;
+        set
+        {
+            if (profileUser.CountryId != value)
+            {
+                profileUser.CountryId = value;
+                LoadStatesByCountry(value).GetAwaiter();
+
+            }
+        }
+    }
+    private Guid selectedStateId
+    {
+        get => profileUser.StateId;
+        set
+        {
+            if (profileUser.StateId != value)
+            {
+                profileUser.StateId = value;
+                LoadCitiesByState(value).GetAwaiter();
+
+            }
+        }
+    }
+
+    private async Task LoadStatesByCountry(Guid selectedCountryId)
+    {
+        if (selectedCountryId != Guid.Empty)
+        {
+            profileUser.CountryId = selectedCountryId;
+            profileUser.StateId = Guid.Empty;
+            profileUser.CityId = Guid.Empty;
+            States = await GetStates(selectedCountryId);
+            StateHasChanged();
+
+        }
+        else
+        {
+            States = null;
+            Cities = null;
+            profileUser.StateId = Guid.Empty;
+            profileUser.CityId = Guid.Empty;
+        }
+    }
+
+    private async Task LoadCitiesByState(Guid selectedStateId)
+    {
+        if (selectedStateId != Guid.Empty)
+        {
+            profileUser.StateId = selectedStateId;
+            profileUser.CityId = Guid.Empty;
+            Cities = await GetCities(selectedStateId);
+            StateHasChanged();
+
+        }
+        else
+        {
+            Cities = null;
+            profileUser.CityId = Guid.Empty;
+        }
+    }
+
+
+    private async Task HandleValidSubmit()
+    {
+        // Process the submitted profileUser data
+        IsLoading = true;
+        profileUser.PhoneNumber = $"{SelectedCountryCode}{profileUser.PhoneNumber}";
+        var response = profileUser.UserId != null ? await _staff.UpdateStaff(profileUser) : await _staff.AddStaff(profileUser);
+
+        if (response.Status)
+        {
+            _toastService.ShowSuccess(response.Message ?? "Profile updated successfully!");
+            StateHasChanged();
+            profileUser = new ProfileUserDTO();
+        }
+        else
+        {
+            if (response.Errors?.Count > 0)
+            {
+                IsLoading = false;
+                errorMessages = response.Errors.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.ToList()
+                );
+                _toastService.ShowError(response.Message);
+
+            }
+            else if (!string.IsNullOrEmpty(response.Message))
+            {
+                IsLoading = false;
+                _toastService.ShowError(response.Message);
+            }
+        }
+
+    }
+
+
+    private async Task<List<CountryResponse>> GetCountries()
+    {
+        var cs = await _auth.GetCountries();
+        return cs.Data.ToList();
+    }
+
+    private async Task<List<StateResponse>> GetStates(Guid CountryId)
+    {
+        var ss = await _auth.GetStates(CountryId);
+        if (ss.Status)
+        {
+            return ss.Data.ToList();
+        }
+        else
+        {
+            _toastService.ShowError(ss.Message);
+            return new List<StateResponse>();
+
+        }
+
+
+    }
+
+    private async Task<List<CityResponse>> GetCities(Guid stateId)
+    {
+        var ss = await _auth.GetCities(stateId);
+        if (ss.Status)
+        {
+            return ss.Data.ToList();
+        }
+        else
+        {
+            _toastService.ShowError(ss.Message);
+            return new List<CityResponse>();
+
+        }
+    }
+
+    private async Task<List<RoleResponse>> GetRoles()
+    {
+        var roles = await _auth.GetRoles();
+        if (roles.Status)
+        {
+            return roles.Data.ToList();
+        }
+        else
+        {
+            _toastService.ShowError(roles.Message);
+            return new List<RoleResponse>();
+
+        }
+    }
+
+    private string? GetErrorMessage(string fieldName)
+    {
+        return errorMessages.ContainsKey(fieldName)
+            ? errorMessages[fieldName].FirstOrDefault()
+            : null;
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        try
+        {
+
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            var stream = file.OpenReadStream();
+            var fileParam = new FileParameter(stream, file.Name, file.ContentType);
+            previewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            var response = await _fileService.UploadFile(fileParam);
+
+            if (response.Status)
+            {
+                var imageUrl = response.Data.FileUrl;
+                profileUser.ProfilePicture = imageUrl;
+                _toastService.ShowSuccess(response.Message);
+                StateHasChanged();
+            }
+            else
+            {
+                _toastService.ShowError(response.Message);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception during upload: {ex.Message}");
+        }
+    }
+
+} 
