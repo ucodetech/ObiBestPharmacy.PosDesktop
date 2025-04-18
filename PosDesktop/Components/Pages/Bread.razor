@@ -5,7 +5,7 @@
             @foreach (var item in Items.Take(Items.Count - 1))
             {
                 <li class="breadcrumb-item">
-                    <a href="@item.Url">@item.Text</a>
+                    <a href="@item.Url" class="text-danger">@item.Text</a>
                 </li>
             }
             <li class="breadcrumb-item active" aria-current="page">@Items.Last().Text</li>

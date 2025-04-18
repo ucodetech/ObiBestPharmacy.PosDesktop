@@ -1,11 +1,11 @@
 ﻿@page "/staff/staff-dashboard"
 @using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @using PosDesktop.Services.Interfaces
 @using static  PosDesktop.Components.Pages.Bread
 @inject IStaffManagementService _staff
 @inject IJSRuntime _js;
-@attribute [Authorize]
-
+@inject NavigationManager navigation
 
 <Bread Items="@pageData" />
 
@@ -30,7 +30,7 @@
             <div class="mb-3">
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
-                        <button class="nav-link active">Staff Management</button>
+                        <button class="nav-link active">Staff Management (@selectedUserId)</button>
                     </li>
                     <li class="nav-item">
                         <button class="nav-link">Attendance</button>
@@ -39,7 +39,7 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <button class="btn btn-info">Add Staff</button>
+                <button type="button" class="btn btn-info" @onclick="ReloadPage"> <i class="bi bi-arrow-repeat"></i></button>
 
             </div>
             <div class="table-responsive">
@@ -61,7 +61,7 @@
                     {
                         <tr>
                             <td colspan="8" class="text-center text-white">
-                                <i class="fa fa-spinner fa-spin"></i> Loading staff...
+                                    <i class="bi bi-arrow-clockwise fa-spin"></i> Loading staff...
                             </td>
                         </tr>
                     }
@@ -79,12 +79,12 @@
 @code {
 
     private Guid? selectedUserId = null;
-
-    private void EditStaff(Guid id)
+     private void ReloadPage()
     {
-        selectedUserId = id;
+        navigation.NavigateTo(navigation.Uri, forceLoad: true);
     }
-
+   
+    
     public List<BreadItem> pageData { get; set; } = new List<BreadItem>
     {
         new BreadItem
@@ -100,16 +100,7 @@
 
    
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            if (staffList.Any())
-            {
-                await _js.InvokeVoidAsync("initDataTable", staffList);
-            }
-        }
-    }
+  
 
     protected override async Task OnInitializedAsync()
     {
@@ -125,13 +116,31 @@
                     Age = s.Age,
                     Salary = s.Salary,
                     Timings = s.Timings,
-                    ProfilePicture = s.ProfilePicture ?? "https://api.dicebear.com/7.x/personas/svg?seed=Random"
+                    ProfilePicture =  "https://api.dicebear.com/7.x/personas/svg?seed=Random"
                 });
             staffList = staff.ToList();
         }
         isLoading = false;
         StateHasChanged();
+
         await _js.InvokeVoidAsync("initDataTable", staffList);
+ 
+    }
+
+    [JSInvokable]
+    public void EditStaffFromJs(string id)
+    {
+        Console.WriteLine($"Received ID from JavaScript: {id}"); 
+        if (Guid.TryParse(id, out var guid))
+        {
+            selectedUserId = guid;
+            Console.WriteLine($"Parsed GUID: {selectedUserId}");
+            StateHasChanged(); 
+        }
+        else
+        {
+            Console.WriteLine($"Failed to parse ID: {id}");
+        }
     }
 
 

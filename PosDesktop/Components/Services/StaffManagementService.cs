@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PosDesktop.Services.Interfaces;
 using System.Net.Http.Json;
+using System.Text.Json;
 using static  PosDesktop.Components.Pages.Staff.UpsertStaff;
 
 namespace PosDesktop.Services;
@@ -10,6 +11,7 @@ public class StaffManagementService : IStaffManagementService
     private readonly DesktopApiClient _client;
     private readonly ILogger<StaffManagementService> _logger;
     private readonly HttpClient _httpClient;
+    private const string ResourcePath = "PosDesktop.wwwroot.country-code.json";
 
     public StaffManagementService(DesktopApiClient client, ILogger<StaffManagementService> logger, HttpClient httpClient)
     {
@@ -111,11 +113,20 @@ public class StaffManagementService : IStaffManagementService
 
     public async Task<List<CountryCodeModel>> GetCountryCodesAsync()
     {
-       var  CountryCodes = await _httpClient.GetFromJsonAsync<List<CountryCodeModel>>("country-code.json");
-        if (CountryCodes == null)
+        
+        var resourceName = ResourcePath;
+        var assembly = typeof(StaffManagementService).Assembly;
+
+        using var stream = assembly.GetManifestResourceStream(resourceName);
+        if (stream == null) return new List<CountryCodeModel>();
+
+        using var reader = new StreamReader(stream);
+        var json = await reader.ReadToEndAsync();
+        var data = JsonSerializer.Deserialize<List<CountryCodeModel>>(json, new JsonSerializerOptions
         {
-            return new List<CountryCodeModel>();
-        }
-        return CountryCodes;
+            PropertyNameCaseInsensitive = true
+        });
+        return data ?? new List<CountryCodeModel>();
     }
+
 }

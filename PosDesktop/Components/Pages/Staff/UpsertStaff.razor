@@ -192,13 +192,21 @@
             <span class="text-danger">@GetErrorMessage(nameof(profileUser.Address))</span>
         </div>
 
-        <button type="submit" class="btn btn-primary d-flex">
-            @if (IsLoading)
-            {
-                <span class="fas fa-spinner fa-spin"></span>
-            }
-            <span>Save Profile</span>
-        </button>
+        <div class="row">
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary d-flex">
+                    @if (IsLoading)
+                    {
+                        <span class="bi bi-arrow-clockwise fa-spin"></span>
+                    }
+                    <span>Save Profile</span>
+                </button>
+
+            </div>
+            <div class="col-md-6">
+                <button type="button" class="btn btn-secondary me-2" @onclick="ClearForm">Clear Form</button>
+            </div>
+        </div>
     </EditForm>
 </div>
 
@@ -222,6 +230,11 @@
         public string Dial_Code { get; set; }
     }
 
+    private void ClearForm()
+    {
+        profileUser = new ProfileUserDTO();
+    }
+
     private List<string> TimingsList = new List<string>()
         {
             "8:00 am - 12:00 pm",
@@ -232,7 +245,7 @@
     [Parameter]
     public Guid? UserId { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
         try
         {
@@ -241,7 +254,7 @@
             {
                 CountryCodes = codes.ToList();
             }
-            
+
 
             if (UserId is not null && UserId != Guid.Empty)
             {
@@ -250,6 +263,7 @@
 
             Countries = await GetCountries();
             Roles = await GetRoles();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
