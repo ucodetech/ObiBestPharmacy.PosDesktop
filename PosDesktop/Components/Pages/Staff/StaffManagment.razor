@@ -9,28 +9,24 @@
 
 <Bread Items="@pageData" />
 
-<div class="row">
-    <div class="col-md-4 col-sm-12">
-
-        <div class="card p-3 bg-pos">
-            <div class="card-header">
-                <div class="card-title">
-                    <h4>Add/Update Staff</h4>
-                </div>
-            </div>
-            <div class="card-body">
-                <UpsertStaff UserId="@selectedUserId" />
-
-            </div>
-        </div>
+    <div class="card-body">
+        <ScrollableModal @ref="modalRef" ModalId="addUpdateStaff" Size="modal-lg" Scrollable="true">
+            <HeaderContent>
+                <h1 class="modal-title fs-5" id="addUpdateStaffLabel">Add/Update Staff</h1>
+            </HeaderContent>
+            <BodyContent>
+                 <UpsertStaff UserId="@selectedUserId" /> 
+            </BodyContent>
+        </ScrollableModal>
 
     </div>
-    <div class="col-md-8 col-sm-12">
+  <div class="row">
+    <div class="col-md-12 col-sm-12">
         <div class="card p-3 bg-pos">
             <div class="mb-3">
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
-                        <button class="nav-link active">Staff Management (@selectedUserId)</button>
+                        <button class="nav-link active">Staff Management</button>
                     </li>
                     <li class="nav-item">
                         <button class="nav-link">Attendance</button>
@@ -39,6 +35,9 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3">
+                <button type="button" class="btn btn-primary" @onclick="() => modalRef?.ShowAsync()">
+                  <i class="fas fa-plus-o"></i> Add New Staff
+                </button>
                 <button type="button" class="btn btn-info" @onclick="ReloadPage"> <i class="bi bi-arrow-repeat"></i></button>
 
             </div>
@@ -58,15 +57,15 @@
                 </thead>
                 <tbody>
                     @if (isLoading)
-                    {
-                        <tr>
-                            <td colspan="8" class="text-center text-white">
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center text-white">
                                     <i class="bi bi-arrow-clockwise fa-spin"></i> Loading staff...
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -79,12 +78,12 @@
 @code {
 
     private Guid? selectedUserId = null;
-     private void ReloadPage()
+    private void ReloadPage()
     {
         navigation.NavigateTo(navigation.Uri, forceLoad: true);
     }
-   
-    
+
+
     public List<BreadItem> pageData { get; set; } = new List<BreadItem>
     {
         new BreadItem
@@ -95,47 +94,73 @@
 
     };
 
+    private ScrollableModal? modalRef;
+
+
     private List<StaffMember> staffList = new();
     private bool isLoading = true;
 
-   
+    private DotNetObjectReference<StaffManagment>? dotNetHelper;
 
-  
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await _staff.GetAllStaff(1, 1000);
-        if (response?.Data != null)
+        dotNetHelper = DotNetObjectReference.Create(this);
+        await LoadStaffData();
+        try
         {
-            var staff = response.Data.Select(s => new StaffMember
-                {
-                    Id = s.UserId,
-                    Name = $"{s.FirstName} {s.LastName}",
-                    Email = s.Email,
-                    Phone = s.PhoneNumber,
-                    Age = s.Age,
-                    Salary = s.Salary,
-                    Timings = s.Timings,
-                    ProfilePicture =  "https://api.dicebear.com/7.x/personas/svg?seed=Random"
-                });
-            staffList = staff.ToList();
+            await _js.InvokeVoidAsync("initDataTable", staffList, dotNetHelper);
         }
-        isLoading = false;
-        StateHasChanged();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing DataTable: {ex.Message}");
+        }
+    }
 
-        await _js.InvokeVoidAsync("initDataTable", staffList);
- 
+
+
+    private async Task LoadStaffData()
+    {
+        isLoading = true;
+        StateHasChanged(); // Show loading indicator
+
+        try
+        {
+            var response = await _staff.GetAllStaff(1, 1000);
+            if (response?.Data != null)
+            {
+                staffList = response.Data.Select(s => new StaffMember
+                    {
+                        Id = s.UserId,
+                        Name = $"{s.FirstName} {s.LastName}",
+                        Email = s.Email,
+                        Phone = s.PhoneNumber,
+                        Age = s.Age,
+                        Salary = s.Salary,
+                        Timings = s.Timings,
+                        ProfilePicture = s.ProfilePicture ?? "https://api.dicebear.com/7.x/personas/svg?seed=Random"
+                    }).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading staff: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     [JSInvokable]
-    public void EditStaffFromJs(string id)
+    public async Task EditStaffFromJs(string id)
     {
-        Console.WriteLine($"Received ID from JavaScript: {id}"); 
         if (Guid.TryParse(id, out var guid))
         {
             selectedUserId = guid;
-            Console.WriteLine($"Parsed GUID: {selectedUserId}");
-            StateHasChanged(); 
+            await modalRef!.ShowAsync();
+            StateHasChanged();
         }
         else
         {
@@ -143,17 +168,30 @@
         }
     }
 
-
     public class StaffMember
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Phone { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
         public int Age { get; set; }
         public double? Salary { get; set; }
         public string? Timings { get; set; }
         public string? ProfilePicture { get; set; }
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            // Clean up DataTable and .NET reference
+            _ = _js.InvokeVoidAsync("destroyDataTable");
+            dotNetHelper?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Dispose error: {ex.Message}");
+        }
     }
 
 }

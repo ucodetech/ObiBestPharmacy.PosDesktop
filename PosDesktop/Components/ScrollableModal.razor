@@ -1,0 +1,48 @@
+﻿@inject IJSRuntime _js
+<div class="modal fade" id="@ModalId" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="@($"{ModalId}Label")" aria-hidden="true">
+    <div class="modal-dialog @(GetDialogClass())">
+    <div class="modal-content bg-pos">
+      <div class="modal-header">
+        @if (HeaderContent != null)
+        {
+           @HeaderContent
+        }
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        @if (BodyContent != null)
+        {
+            @BodyContent
+        }
+      </div>
+      <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="() => HideAsync()"> Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@code {
+    [Parameter] public string ModalId { get; set; } = $"modal_{Guid.NewGuid()}";
+    [Parameter] public string Size { get; set; } = ""; // "modal-lg", "modal-sm"
+    [Parameter] public bool Scrollable { get; set; } = false;
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? BodyContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    public async Task ShowAsync() =>
+        await _js.InvokeVoidAsync("scrollableModal.showModal", ModalId);
+
+
+
+    public async Task HideAsync() =>
+        await _js.InvokeVoidAsync("scrollableModal.hideModal", ModalId);
+
+    private string GetDialogClass()
+    {
+        var classes = new List<string>();
+        if (!string.IsNullOrEmpty(Size)) classes.Add(Size);
+        if (Scrollable) classes.Add("modal-dialog-scrollable");
+        return string.Join(" ", classes);
+    }
+}

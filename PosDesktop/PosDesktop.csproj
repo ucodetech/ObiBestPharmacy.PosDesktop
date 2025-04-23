@@ -103,4 +103,12 @@
       <ProjectReference Include="..\ApiClient\ApiClient.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <EditorConfigFiles Remove="C:\Users\ejekw\Documents\opt\ObiBestPharmacy.PosDesktop\PosDesktop\.editorconfig" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include="C:\Users\ejekw\Documents\opt\ObiBestPharmacy.PosDesktop\PosDesktop\.editorconfig" />
+    </ItemGroup>
+
 </Project>

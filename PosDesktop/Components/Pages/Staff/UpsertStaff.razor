@@ -6,6 +6,8 @@
  @inject IAuthService _auth
  @inject IFileService _fileService
 
+
+
 <div>
     <EditForm Model="@profileUser" OnValidSubmit="@HandleValidSubmit">
         <DataAnnotationsValidator />
@@ -245,20 +247,54 @@
     [Parameter]
     public Guid? UserId { get; set; }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        profileUser = new ProfileUserDTO();
+
+        if (UserId is not null && UserId != Guid.Empty)
+        {
+            var user = await _staff.GetStaff(UserId.Value);
+            if (user.Status)
+            {
+                profileUser.UserId = user.Data.UserId;
+                profileUser.FirstName = user.Data.FirstName;
+                profileUser.LastName = user.Data.LastName;
+                profileUser.OtherNames = user.Data.OtherNames;
+                profileUser.Email = user.Data.Email;
+                profileUser.PhoneNumber = user.Data.PhoneNumber;
+                profileUser.CountryId = user.Data.CountryId ?? Guid.Empty;
+                profileUser.StateId = user.Data.StateId ?? Guid.Empty;
+                profileUser.CityId = user.Data.CityId ?? Guid.Empty;
+                profileUser.RoleId = user.Data.RoleId;
+                profileUser.Gender = user.Data.Gender;
+                profileUser.Salary = user.Data.Salary ?? 0.0;
+                profileUser.ProfilePicture = user.Data.ProfilePicture;
+                profileUser.Timings = user.Data.Timings;
+                profileUser.Address = user.Data.Address;
+                profileUser.DateOfBirth = user.Data.DateOfBirth ?? default(System.DateTimeOffset);
+
+                IsEditing = true;
+                SelectedCountryCode = profileUser.PhoneNumber != null ?  profileUser.PhoneNumber.Substring(0, 3) : null;
+            }
+            else
+            {
+                _toastService.ShowError(user.Message);
+            }
+        }
+    }
+
+
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            profileUser = new ProfileUserDTO();
+
             var codes = await _staff.GetCountryCodesAsync();
             if (codes is not null)
             {
                 CountryCodes = codes.ToList();
-            }
-
-
-            if (UserId is not null && UserId != Guid.Empty)
-            {
-                // profileUser = await _staff.GetStaff(UserId.Value);
             }
 
             Countries = await GetCountries();
@@ -284,6 +320,7 @@
             }
         }
     }
+    
     private Guid selectedStateId
     {
         get => profileUser.StateId;
