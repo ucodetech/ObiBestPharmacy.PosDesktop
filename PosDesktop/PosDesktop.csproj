@@ -111,4 +111,8 @@
       <None Include="C:\Users\ejekw\Documents\opt\ObiBestPharmacy.PosDesktop\PosDesktop\.editorconfig" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Components\NewFolder\" />
+    </ItemGroup>
+
 </Project>

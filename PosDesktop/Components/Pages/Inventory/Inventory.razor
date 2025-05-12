@@ -1,0 +1,323 @@
+﻿@page "/inventory"
+@using System.Collections.Generic
+@using System.Linq
+@using ApiClient
+@using PosDesktop.Components.Services.Interfaces
+@inject IJSRuntime _js
+@inject IInventoryService _productService
+@inject IToastService _toastService
+@inject NavigationManager navigation
+
+<div class="container-fluid text-light">
+    <div class="row mb-3">
+        <div class="col">
+            <strong>@allCount</strong> total products
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-primary" @onclick="NavigateToAddNew">Add New Inventory</button>
+        </div>
+    </div>
+
+    <div class="row ">
+        <div class="col-md-4">
+            <div class="card p-3 bg-pos text-light">
+                <div style="font-family: Arial, sans-serif; max-width: auto; margin: 0 auto; padding: 5px;box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h2 style="margin-top: 0; font-size:20px;">Product Status</h2>
+
+                    <div class="d-flex flex-wrap">
+                        <div style="background-color:#0f0c29; padding:5px; font-family:Arial, sans-serif; display:inline-block; border-radius: 10px; border: 2px solid red; margin:5px;">
+                            <div @onclick='(() => ApplyFilters("All"))' style="display: inline-flex; align-items: center; justify-content:space-between; color: white; padding: 8px 2px; font-size: 14px; min-width: 120px; cursor:pointer">
+                                <span class="">All</span>
+                                <span style="background-color: pink; color: black; font-weight: bold; padding: 2px 8px; border-radius: 8px; margin-left: 15px; margin-right:0px !important; font-size: 13px;">
+                                    @allCount
+                                </span>
+                            </div>
+                        </div>
+                        <div style="background-color:#0f0c29; padding:5px; font-family:Arial, sans-serif; display:inline-block; border-radius: 10px; border: 2px solid #0f0c29; margin:5px;">
+                            <div @onclick='(() => ApplyFilters("Available"))' style="display: inline-flex; align-items: center; justify-content:space-between; color: white; padding: 8px 2px; font-size: 14px; min-width: 120px; cursor:pointer">
+                                <span class="">Available</span>
+                                <span style="background-color: pink; color: black; font-weight: bold; padding: 2px 8px; border-radius: 8px; margin-left: 15px; margin-right:0px !important; font-size: 13px;">
+                                    @activeCount
+                                </span>
+                            </div>
+                        </div>
+                        <div style="background-color:#0f0c29; padding:5px; font-family:Arial, sans-serif; display:inline-block; border-radius: 10px; border: 2px solid #0f0c29; margin:5px;">
+                            <div @onclick='(() => ApplyFilters("OutOfStock"))' style="display: inline-flex; align-items: center; justify-content:space-between; color: white; padding: 8px 2px; font-size: 14px; min-width: 120px; cursor:pointer">
+                                <span class="">Out Of Stock</span>
+                                <span style="background-color: pink; color: black; font-weight: bold; padding: 2px 8px; border-radius: 8px; margin-left: 15px; margin-right:0px !important; font-size: 13px;">
+                                    @activeCount
+                                </span>
+                            </div>
+                        </div>
+                        <div style="background-color:#0f0c29; padding:5px; font-family:Arial, sans-serif; display:inline-block; border-radius: 10px; border: 2px solid #0f0c29; margin:5px;">
+                            <div @onclick='(() => ApplyFilters("Draft"))' style="display: inline-flex; align-items: center; justify-content:space-between; color: white; padding: 8px 2px; font-size: 14px; min-width: 120px; cursor:pointer">
+                                <span class="">Draft</span>
+                                <span style="background-color: pink; color: black; font-weight: bold; padding: 2px 8px; border-radius: 8px; margin-left: 15px; margin-right:0px !important; font-size: 13px;">
+                                    @activeCount
+                                </span>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+
+                    <div style="margin-bottom: 20px; margin-top:5px">
+                        <h3 style="margin-bottom: 10px; font-size:20px">Category</h3>
+                        <div class="d-flex gap-2">
+                            <select @bind="selectedCategory" class="form-control" style="padding: 8px 12px; background: #f5f5f5; border-radius: 4px; border: 1px solid #ddd; width: 200px;">
+                                <option value="All">All</option>
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category.Id">@category.Name</option>
+                                }
+                            </select>
+                            <button @onclick="ApplyCategoryFilter" style="padding: 8px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 10px; font-size:20px">Price</h3>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" @bind="minPrice" placeholder="Min" style="padding: 8px 12px; background: #f5f5f5; border-radius: 4px; border: 1px solid #ddd; width: 100px;" />
+                            <span>-</span>
+                            <input type="number" @bind="maxPrice" placeholder="Max" style="padding: 8px 12px; background: #f5f5f5; border-radius: 4px; border: 1px solid #ddd; width: 100px;" />
+                            <button @onclick="ApplyPriceFilter" style="padding: 8px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Apply
+                            </button>
+                        </div>
+                    </div>
+
+                    <button @onclick="ResetFilters" style="padding: 10px 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; margin-top:10px;">
+                        Reset Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 table-responsive">
+            <table id="productTable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductResponse> allProducts = new List<ProductResponse>();
+    private List<ProductResponse> filteredProducts;
+
+    private List<ListCategoryResponse> categories = new List<ListCategoryResponse>();
+    private int allCount = 0;
+    private int activeCount = 0;
+    private bool IsInitialized = false;
+    private bool isLoading = true;
+    private Guid? selectedProductId = null;
+
+    private string currentFilter = "All";
+    private string selectedCategory = "All";
+    private int? minPrice;
+    private int? maxPrice;
+
+    private DotNetObjectReference<Inventory>? dotNetHelper;
+
+    private void ReloadPage()
+    {
+        navigation.NavigateTo(navigation.Uri, forceLoad: true);
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        dotNetHelper = DotNetObjectReference.Create(this);
+        await loadProductData();
+        try
+        {
+            await _js.InvokeVoidAsync("initProductDataTable", allProducts, dotNetHelper);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing DataTable: {ex.Message}");
+        }
+
+
+    }
+
+    private void ApplyPriceFilter()
+    {
+        // Call your price filtering logic here
+        Console.WriteLine($"Price filter applied: {minPrice} - {maxPrice}");
+    }
+
+    private void ApplyCategoryFilter()
+    {
+        // Call your price filtering logic here
+        Console.WriteLine($"Price filter applied: {minPrice} - {maxPrice}");
+    }
+
+    private async Task ApplyFilters(string? value)
+    {
+        filteredProducts = allProducts;
+
+        // if (selectedStatus != "All")
+        // {
+        //     filteredProducts = filteredProducts.Where(p => p.StatusText == selectedStatus).ToList();
+        // }
+
+        // if (!string.IsNullOrEmpty(selectedCategory))
+        // {
+        //     filteredProducts = filteredProducts.Where(p => p.Category?.Id.ToString() == selectedCategory).ToList();
+        // }
+
+        // Reinitialize DataTables
+        if (IsInitialized)
+        {
+            await _js.InvokeVoidAsync("destroyProductDataTable", "productTable");
+            await _js.InvokeVoidAsync("initializeProductDataTable", "productTable");
+        }
+    }
+
+
+    private void ResetFilters()
+    {
+        currentFilter = "All";
+        selectedCategory = "All";
+        minPrice = null;
+        maxPrice = null;
+        // Call your reset logic here
+    }
+
+    public enum PStatus
+    {
+        Available = 1,
+        OutOfStock = 0,
+        Draft = 2
+    }
+
+    private void UpdateCounts()
+    {
+        allCount = allProducts.Count;
+        activeCount = allProducts.Count(p => p.Status == ProductStatus._1);
+        // ... update other counts ...
+    }
+
+    private void NavigateToAddNew()
+    {
+        Console.WriteLine("Add New clicked");
+        // Navigation logic
+    }
+
+    [JSInvokable]
+    public async Task EditProductFromJs(string id)
+    {
+        if (Guid.TryParse(id, out var guid))
+        {
+            selectedProductId = guid;
+            // await modalRef!.ShowAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine($"Failed to parse ID: {id}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task DeleteProductFromJs(string id)
+    {
+        if (Guid.TryParse(id, out var guid))
+        {
+            selectedProductId = guid;
+            // await modalRef!.ShowAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine($"Failed to parse ID: {id}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task ViewProductFromJs(string id)
+    {
+        if (Guid.TryParse(id, out var guid))
+        {
+            selectedProductId = guid;
+            // await modalRef!.ShowAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine($"Failed to parse ID: {id}");
+        }
+    }
+
+
+    private async Task loadProductData()
+    {
+        isLoading = true;
+        var res = await _productService.GetAllProduct();
+        if (res.Data is not null)
+        {
+            allProducts = res.Data.Select(p => new ProductResponse
+                {
+                    ProductId = p.ProductId,
+                    Name = p.Name,
+                    Image = p.Image,
+                    Description = p.Description,
+                    Price = p.Price,
+                    Stock = p.Stock,
+                    Category = new ListCategoryResponse
+                    {
+                        Id = p.Category.Id,
+                        Name = p.Category.Name,
+                        Description = p.Category.Description,
+                        Image = p.Category.Image
+                    },
+                    Status = p.Status,
+                    StatusText = p.StatusText
+                }).ToList();
+
+            categories = allProducts.Select(p => p.Category).Distinct().ToList();
+            // ApplyFilters();
+            UpdateCounts();
+            isLoading = false;
+        }
+        else
+        {
+            isLoading = false;
+            _toastService.ShowError("Products not found");
+            StateHasChanged();
+            return;
+        }
+    }
+
+
+    public void Dispose()
+    {
+        try
+        {
+            // Clean up DataTable and .NET reference
+            _ = _js.InvokeVoidAsync("destroyProductDataTable");
+            dotNetHelper?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Dispose error: {ex.Message}");
+        }
+    }
+
+}

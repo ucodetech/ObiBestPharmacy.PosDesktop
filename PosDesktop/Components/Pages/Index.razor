@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Authorization
+@using PosDesktop.Services.Interfaces
 @attribute [AllowAnonymous]
 @layout GuestLayout
+@inject IUserStateService _userService
 
 @inject NavigationManager Navigation
 
@@ -9,11 +11,27 @@
     <h1 class="text-light">Welcome to ObiBest POS</h1>
     <p class="text-light">Your all-in-one management solution</p>
     <div>
-        <a href="/auth/login" class="btn btn-light m-2">Login</a>
-        <a href="/register" class="btn btn-outline-danger m-2">Register</a>
+        @if (IsAuth)
+        {
+            <a href="/dashboard" class="btn btn-light m-2">Dashboard</a>
+        }
+        else
+        {
+            <a href="/auth/login" class="btn btn-light m-2">Login</a>
+            <a href="/register" class="btn btn-outline-danger m-2">Register</a>
+        }
+        
     </div>
 </div>
 
+
 @code {
-   
+    private bool IsAuth { get; set; } = false;
+    protected override async Task OnInitializedAsync()
+    {
+        bool loggedIn = await _userService.IsLoggedIn();
+        IsAuth = loggedIn;
+        StateHasChanged();
+
+    }
 }

@@ -1,13 +1,14 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
 @using PosDesktop.Components.Layout
+@using PosDesktop.Components.Pages
 
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <NotAuthorized>
-                    @* <RedirectToLogin /> *@
+                    <RedirectToLogin />
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -20,6 +21,3 @@
     </Router>
 </CascadingAuthenticationState>
 
-@code {
-    [Inject] private NavigationManager Navigation { get; set; }
-}

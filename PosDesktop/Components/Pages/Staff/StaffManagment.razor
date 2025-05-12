@@ -126,7 +126,7 @@
 
         try
         {
-            var response = await _staff.GetAllStaff(1, 1000);
+            var response = await _staff.GetAllStaff();
             if (response?.Data != null)
             {
                 staffList = response.Data.Select(s => new StaffMember

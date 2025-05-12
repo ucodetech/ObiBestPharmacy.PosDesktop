@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ApiClient;
+using Microsoft.AspNetCore.Http;
 
 namespace PosDesktop.Services.Interfaces;
 

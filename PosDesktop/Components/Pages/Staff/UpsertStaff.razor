@@ -1,4 +1,5 @@
 ﻿ @using System.ComponentModel.DataAnnotations
+@using ApiClient
  @using PosDesktop.Services.Interfaces
  @inject IJSRuntime JSRuntime
  @inject IStaffManagementService _staff
@@ -214,6 +215,9 @@
 
 
 @code {
+     
+    private ScrollableModal? modalRef;
+
     private ProfileUserDTO? profileUser = new ProfileUserDTO();
     private List<CountryResponse>? Countries { get; set; }
     private List<StateResponse>? States { get; set; }
@@ -225,6 +229,7 @@
     private string? previewUrl { get; set; }
     private string? SelectedCountryCode { get; set; }
     private List<CountryCodeModel> CountryCodes = new List<CountryCodeModel>();
+    
     public class CountryCodeModel
     {
         public string Code { get; set; }
@@ -256,6 +261,13 @@
             var user = await _staff.GetStaff(UserId.Value);
             if (user.Status)
             {
+                SelectedCountryCode = user.Data.PhoneNumber != null ? user.Data.PhoneNumber.Substring(0, 4) : null;
+                if (user.Data.CountryId != null)
+                    await LoadStatesByCountry((Guid)user.Data.CountryId);
+
+                if (user.Data.StateId != null)
+                    await LoadCitiesByState((Guid)user.Data.StateId);
+
                 profileUser.UserId = user.Data.UserId;
                 profileUser.FirstName = user.Data.FirstName;
                 profileUser.LastName = user.Data.LastName;
@@ -274,7 +286,6 @@
                 profileUser.DateOfBirth = user.Data.DateOfBirth ?? default(System.DateTimeOffset);
 
                 IsEditing = true;
-                SelectedCountryCode = profileUser.PhoneNumber != null ?  profileUser.PhoneNumber.Substring(0, 3) : null;
             }
             else
             {
@@ -383,8 +394,10 @@
         if (response.Status)
         {
             _toastService.ShowSuccess(response.Message ?? "Profile updated successfully!");
-            StateHasChanged();
+            // await modalRef!.HideAsync();
             profileUser = new ProfileUserDTO();
+            StateHasChanged();
+
         }
         else
         {

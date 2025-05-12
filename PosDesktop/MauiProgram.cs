@@ -5,6 +5,8 @@ using PosDesktop.Services;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
+using ApiClient;
+using PosDesktop . Helpers;
 
 namespace PosDesktop
 {
@@ -69,8 +71,9 @@ namespace PosDesktop
                 var interceptorHandler = sp.GetRequiredService<HttpInterceptorHandler>();
                 return new DesktopApiClient(url, httpClient);
             });
-            // Your own extension for registering services
-            builder.Services.AddApplicationServices(builder.Configuration);
+			builder.Services . AddSingleton<ApiClientWrapper> ( );
+			// Your own extension for registering services
+			builder . Services.AddApplicationServices(builder.Configuration);
 
             return builder.Build();
         }

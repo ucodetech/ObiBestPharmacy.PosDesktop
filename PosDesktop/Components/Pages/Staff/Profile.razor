@@ -1,0 +1,324 @@
+﻿@page "/profile"
+@using ApiClient
+@using PosDesktop.Services.Interfaces
+@using static PosDesktop.Components.Pages.Staff.UpsertStaff
+@inject IUserStateService _user
+@inject IAuthService  _auth;
+@inject IStaffManagementService _staffService
+@inject IToastService _toastService
+@inject IFileService _fileService
+
+<div class="d-flex" style="min-height: 100vh; background-color: #0f0f10; color: white; font-family: 'Segoe UI', sans-serif;">
+    <!-- Sidebar -->
+    <div class="p-3" style="width: 250px; background-color: #1e1e1e; border-radius: 10px; margin: 20px;">
+        <button class="btn btn-pink w-100 mb-3 active">
+            <i class="bi bi-person-fill me-2"></i> My Profile
+        </button>
+        <button class="btn btn-dark w-100 mb-3 text-start">
+            <i class="bi bi-gear-fill me-2"></i> Manage Access
+        </button>
+        <button class="btn btn-dark w-100 text-start">
+            <i class="bi bi-box-arrow-right me-2"></i> Logout
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-fill p-4" style="background-color: #1e1e1e; border-radius: 10px; margin: 20px;">
+        <h4 class="mb-4">Personal Information</h4>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">First Name</label>
+                <input class="form-control bg-dark text-white border-0" @bind="staff.FirstName" />
+                <span class="text-danger">@GetErrorMessage(nameof(staff.FirstName))</span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Last Name</label>
+                <input class="form-control bg-dark text-white border-0" @bind="staff.LastName" />
+                <span class="text-danger">@GetErrorMessage(nameof(staff.LastName))</span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Other Names</label>
+            <input class="form-control bg-dark text-white border-0" @bind="staff.OtherNames" />
+            <span class="text-danger">@GetErrorMessage(nameof(staff.OtherNames))</span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            <input class="form-control bg-dark text-white border-0" @bind="staff.PhoneNumber" />
+            <span class="text-danger">@GetErrorMessage(nameof(staff.PhoneNumber))</span>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4 col-sm-12">
+                <label for="CountryId" class="form-label">Country</label>
+                <InputSelect id="CountryId" class="form-select" @bind-Value="selectedCountryId">
+                    <option value="">Select Country</option>
+                    @if (Countries != null)
+                    {
+                        @foreach (var country in Countries)
+                        {
+                            <option value="@country.CountryId">@country.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(staff.CountryId))</span>
+
+            </div>
+
+            <div class="col-md-4 col-sm-12">
+                <label for="StateId" class="form-label">State</label>
+                <InputSelect id="StateId" class="form-select" @bind-Value="selectedStateId">
+                    <option value="">Select State</option>
+                    @if (States != null)
+                    {
+                        @foreach (var state in States)
+                        {
+                            <option value="@state.StateId">@state.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(staff.StateId))</span>
+
+            </div>
+            <div class="col-md-4 col-sm-12">
+                <label for="CityId" class="form-label">City</label>
+                <InputSelect id="CityId" class="form-select" @bind-Value="staff.CityId">
+                    <option value="">Select City</option>
+                    @if (Cities != null)
+                    {
+                        @foreach (var city in Cities)
+                        {
+                            <option value="@city.CityId">@city.Name</option>
+                        }
+                    }
+                </InputSelect>
+                <span class="text-danger">@GetErrorMessage(nameof(staff.CityId))</span>
+
+            </div>
+        </div>
+
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Gender</label>
+                <select class="form-select bg-dark text-white border-0" @bind="staff.Gender">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+                <span class="text-danger">@GetErrorMessage(nameof(staff.Gender))</span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date of Birth</label>
+                <input type="date" class="form-control bg-dark text-white border-0" @bind="staff.DateOfBirth" />
+                <span class="text-danger">@GetErrorMessage(nameof(staff.DateOfBirth))</span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Address</label>
+            <input class="form-control bg-dark text-white border-0" @bind="staff.Address" />
+            <span class="text-danger">@GetErrorMessage(nameof(staff.Address))</span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <a href="#" class="text-decoration-none text-white">Discard Changes</a>
+            <button class="btn btn-pink px-4" @onclick="SaveChanges">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private StaffResponse? staff;
+
+    private List<CountryResponse>? Countries { get; set; }
+    private List<StateResponse>? States { get; set; }
+    private List<CityResponse>? Cities { get; set; }
+    private Dictionary<string, List<string>>? errorMessages = new();
+
+    private bool IsLoading { get; set; } = false;
+    private bool IsEditing { get; set; } = false;
+    private string? previewUrl { get; set; }
+    private string? SelectedCountryCode { get; set; }
+    private List<CountryCodeModel> CountryCodes = new List<CountryCodeModel>();
+
+   
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var codes = await _staffService.GetCountryCodesAsync();
+        if (codes is not null)
+        {
+            CountryCodes = codes.ToList();
+        }
+
+        Countries = await GetCountries();
+
+        var response = await _user.CurrentUser();
+        if (response.Data is not null)
+        {
+            staff = response.Data;
+        }
+        staff = new StaffResponse();
+    }
+
+    private Guid selectedCountryId
+    {
+        get
+        {
+            return (Guid)staff.CountryId;
+        }
+
+        set
+        {
+            if (staff.CountryId != value)
+            {
+                staff.CountryId = value;
+                LoadStatesByCountry(value).GetAwaiter();
+
+            }
+        }
+    }
+
+    private Guid selectedStateId
+    {
+        get => (Guid)staff.StateId;
+        set
+        {
+            if (staff.StateId != value)
+            {
+                staff.StateId = value;
+                LoadCitiesByState(value).GetAwaiter();
+
+            }
+        }
+    }
+
+    private async Task LoadStatesByCountry(Guid selectedCountryId)
+    {
+        if (selectedCountryId != Guid.Empty)
+        {
+            staff.CountryId = selectedCountryId;
+            staff.StateId = Guid.Empty;
+            staff.CityId = Guid.Empty;
+            States = await GetStates(selectedCountryId);
+            StateHasChanged();
+
+        }
+        else
+        {
+            States = null;
+            Cities = null;
+            staff.StateId = Guid.Empty;
+            staff.CityId = Guid.Empty;
+        }
+    }
+
+    private async Task LoadCitiesByState(Guid selectedStateId)
+    {
+        if (selectedStateId != Guid.Empty)
+        {
+            staff.StateId = selectedStateId;
+            staff.CityId = Guid.Empty;
+            Cities = await GetCities(selectedStateId);
+            StateHasChanged();
+
+        }
+        else
+        {
+            Cities = null;
+            staff.CityId = Guid.Empty;
+        }
+    }
+
+    private async Task<List<CountryResponse>> GetCountries()
+    {
+        var cs = await _auth.GetCountries();
+        return cs.Data.ToList();
+    }
+
+    private async Task<List<StateResponse>> GetStates(Guid CountryId)
+    {
+        var ss = await _auth.GetStates(CountryId);
+        if (ss.Status)
+        {
+            return ss.Data.ToList();
+        }
+        else
+        {
+            _toastService.ShowError(ss.Message);
+            return new List<StateResponse>();
+
+        }
+
+
+    }
+
+    private async Task<List<CityResponse>> GetCities(Guid stateId)
+    {
+        var ss = await _auth.GetCities(stateId);
+        if (ss.Status)
+        {
+            return ss.Data.ToList();
+        }
+        else
+        {
+            _toastService.ShowError(ss.Message);
+            return new List<CityResponse>();
+
+        }
+    }
+
+    private string? GetErrorMessage(string fieldName)
+    {
+        return errorMessages.ContainsKey(fieldName)
+            ? errorMessages[fieldName].FirstOrDefault()
+            : null;
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        try
+        {
+
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            var stream = file.OpenReadStream();
+            var fileParam = new FileParameter(stream, file.Name, file.ContentType);
+            previewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            var response = await _fileService.UploadFile(fileParam);
+
+            if (response.Status)
+            {
+                var imageUrl = response.Data.FileUrl;
+                staff.ProfilePicture = imageUrl;
+                _toastService.ShowSuccess(response.Message);
+                StateHasChanged();
+            }
+            else
+            {
+                _toastService.ShowError(response.Message);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception during upload: {ex.Message}");
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+       
+
+        // await _staffService.UpdateStaff(staff);
+    }
+}

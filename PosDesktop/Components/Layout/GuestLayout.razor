@@ -66,9 +66,8 @@ ShowProgressBar="true">
     protected override async Task OnInitializedAsync()
     {
         bool loggedIn = await _userService.IsLoggedIn();
-        if (loggedIn)
-        {
-            IsAuth = true;
-        }
+        IsAuth = loggedIn;
+        StateHasChanged();
+        
     }
  }

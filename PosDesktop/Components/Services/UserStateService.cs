@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+﻿using ApiClient;
+using Microsoft.AspNetCore.Components.Authorization;
 using PosDesktop.Components.Services.Interfaces;
 using PosDesktop.Services.Interfaces;
 

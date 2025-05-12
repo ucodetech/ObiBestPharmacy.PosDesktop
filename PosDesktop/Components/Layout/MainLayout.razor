@@ -1,7 +1,7 @@
 ﻿@using Blazored.Toast.Configuration
-@* @using PosDesktop.Services.Interfaces *@
+@using PosDesktop.Services.Interfaces
 @inherits LayoutComponentBase
-@* @inject IUserStateService _userStateService; *@
+@inject IUserStateService _userStateService;
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -23,7 +23,31 @@ ShowProgressBar="true">
 
     <main>
         <div class="top-row px-4">
-            <button type="button" @onclick="HandleLogout"  class="btn btn-sm btn-danger">Logout</button>
+            <div class="d-flex align-items-center gap-3 position-relative">
+                <!-- Notification Icon with Badge -->
+                <div class="position-relative">
+                    <i class="bi bi-bell-fill fs-5 text-white"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-pink">
+                        01
+                    </span>
+                </div>
+
+                <!-- Divider -->
+                <div style="height: 24px; width: 1px; background-color: #6c757d;"></div>
+
+                <!-- Profile Picture Dropdown -->
+                <div class="dropdown">
+                    <a href="#" class="d-block text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="your-profile-image.jpg" class="rounded-circle border border-pink" width="40" height="40" style="object-fit: cover;" />
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end bg-dark text-white shadow">
+                        <li><a class="dropdown-item text-white" href="/profile">Profile</a></li>
+                        <li><hr class="dropdown-divider border-secondary" /></li>
+                        <li><a class="dropdown-item text-danger" @onclick="HandleLogout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
 
         <article class="content px-4">
@@ -42,6 +66,7 @@ ShowProgressBar="true">
     }
     protected override async Task OnInitializedAsync()
     {
+
         // Dynamically load the script from wwwroot/lib/staff.js
         await JSRuntime.InvokeVoidAsync("eval", @"
             var script = document.createElement('script');

@@ -1,4 +1,6 @@
-﻿namespace PosDesktop.Services.Interfaces;
+﻿using ApiClient;
+
+namespace PosDesktop.Services.Interfaces;
 
 public interface IUserStateService
 {

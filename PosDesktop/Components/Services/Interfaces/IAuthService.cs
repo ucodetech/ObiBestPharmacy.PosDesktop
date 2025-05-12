@@ -1,4 +1,5 @@
-﻿using  PosDesktop.Components.Pages.Auth;
+﻿using ApiClient;
+using  PosDesktop.Components.Pages.Auth;
 
 namespace PosDesktop.Services.Interfaces;
 

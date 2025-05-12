@@ -672,6 +672,77 @@
         }
       }
     },
+    "/api/Account/updateProfile": {
+      "put": {
+        "tags": [
+          "AccountEndpoints"
+        ],
+        "summary": "Update Profile",
+        "description": "Update profile",
+        "operationId": "auth.updateUserProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Auth/CreateAccount": {
       "post": {
         "tags": [
@@ -1195,26 +1266,6 @@
           "Category"
         ],
         "summary": "Get all categories with pagination",
-        "parameters": [
-          {
-            "name": "pageNumber",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 10
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2343,24 +2394,6 @@
         "summary": "Get all products with pagination",
         "description": "Retrieve all products with pagination",
         "operationId": "product.getAll",
-        "parameters": [
-          {
-            "name": "pageNumber",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2853,16 +2886,6 @@
         "summary": "Update staff details",
         "description": "Update the details of an existing staff member",
         "operationId": "staff.update",
-        "parameters": [
-          {
-            "name": "editor",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -2943,14 +2966,6 @@
               "type": "string",
               "format": "uuid"
             }
-          },
-          {
-            "name": "editor",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           }
         ],
         "responses": {
@@ -3005,24 +3020,6 @@
         "summary": "Get all staff members",
         "description": "Retrieve a list of all staff members",
         "operationId": "staff.getAll",
-        "parameters": [
-          {
-            "name": "pageNumber",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -3647,6 +3644,28 @@
         },
         "additionalProperties": false
       },
+      "ListCategoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "image": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginResponse": {
         "type": "object",
         "properties": {
@@ -3922,7 +3941,14 @@
             "nullable": true
           },
           "category": {
-            "$ref": "#/components/schemas/CategoryResponse"
+            "$ref": "#/components/schemas/ListCategoryResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProductStatus"
+          },
+          "statusText": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3990,6 +4016,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "ProductStatus": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
       },
       "RegisterUserDTO": {
         "type": "object",
@@ -4162,6 +4197,11 @@
           "otherNames": {
             "type": "string",
             "nullable": true
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
           },
           "email": {
             "type": "string",
@@ -4398,6 +4438,56 @@
         "properties": {
           "image": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "otherNames": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "stateId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           }
         },

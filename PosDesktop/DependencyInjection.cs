@@ -26,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<IUserStateService, UserStateService>();
         services.AddScoped<IStaffManagementService, StaffManagementService>();
         services.AddScoped<IFileService, FileService>();
+        services.AddScoped<IInventoryService, InventoryService>();
+
 
 
         return services;
